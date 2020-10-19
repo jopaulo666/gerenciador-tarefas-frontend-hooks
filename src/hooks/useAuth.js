@@ -35,7 +35,7 @@ export const useAuth = () => {
     }
 
     const storeCredentials = (token) =>{
-        const tokenData = atob(token.split(".")[1]);
+        const tokenData = JSON.parse(atob(token.split(".")[1]));
         const credentials = {username: tokenData.sub, displayName: tokenData.displayName, token: token};
         sessionStorage.setItem(CREDENTIALS_NAME, JSON.stringify(credentials));
         setCredentials(credentials);
