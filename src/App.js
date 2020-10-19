@@ -13,7 +13,7 @@ const App = (props) => {
     <AuthContext.Provider value={auth}>
       <BrowserRouter>
         <div className="App">
-          <NavBar  />
+          <NavBar />
           <div className="container" style={{marginTop: 20}}>
             <Switch>
               <Route exact path="/login" component={Login} />
