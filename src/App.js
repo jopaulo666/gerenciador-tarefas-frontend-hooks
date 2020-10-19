@@ -1,23 +1,16 @@
-import React, { Component } from 'react';
+import React from 'react';
 import NavBar from './components/NavBar';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import TaskListTable from './components/TaskListTable';
 import TaskForm from './components/TaskForm';
 import Login from './components/Login';
+import { useAuth, AuthContext } from './hooks/useAuth'
 
-class App extends Component {
-  constructor(props){
-  super(props)
-
-  this.onRefreshHandler = this.onRefreshHandler.bind(this);
-}
-
-  onRefreshHandler(){
-    this.forceUpdate();
-  }
-
-  render() {
-    return (
+const App = (props) => {
+  const auth = useAuth();
+  
+  return (
+    <AuthContext.Provider value={auth}>
       <BrowserRouter>
         <div className="App">
           <NavBar onLinkClick={this.onRefreshHandler} />
@@ -31,8 +24,8 @@ class App extends Component {
           </div>
         </div>
       </BrowserRouter>
-    );
-  }
+    </AuthContext.Provider>
+  );  
 }
 
 export default App;

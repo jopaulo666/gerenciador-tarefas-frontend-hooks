@@ -1,8 +1,10 @@
-const { useState, useEffect } = require("react");
+const { useState, useEffect, createContext } = require("react");
 const { default: Axios } = require("axios");
-const { AUTH_ENDPOINT, JWT_TOKEN_NAME, CREDENTIALS_NAME } = require("../constants");
+const { AUTH_ENDPOINT, CREDENTIALS_NAME } = require("../constants");
 
-const useAuth = () => {
+export const AuthContext = createContext();
+
+export const useAuth = () => {
     const [credentials, setCredentials] = useState ({username: null, displayNam: null, token: null});
     const [error, setError] = useState(null);
     const [processing, setProcessing] = useState(false);
@@ -50,4 +52,6 @@ const useAuth = () => {
     const isAuthenticated = () => {
         return sessionStorage.getItem(CREDENTIALS_NAME) !== null;
     }
+
+    return {login, logout, isAuthenticated, credentials, error, processing}
 }
