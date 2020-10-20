@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { useState } from "react";
 import { AuthContext } from '../hooks/useAuth'
 
-export const useTasks =  () => {
+export const useTasks = () => {
     const auth = useContext(AuthContext);
     const [taskList, setTaskList] = useState([]);
     const [error, setError] = useState(null);
