@@ -1,15 +1,15 @@
-const { useContext, useState, useEffect } = require("react");
-const { AuthContext } = require("./useAuth");
+import { useContext, useState, useEffect } from "react"
+import { AuthContext } from '../hooks/useAuth'
 
-const useNavbarItems = () => {
-
+export const useNavBarItems = () => {
     const auth = useContext(AuthContext);
     const [items, setItems] = useState([]);
+    const [helloMessage, setHelloMessage] = useState(null);
 
     useEffect(() => {
         const activate = (clickedItem) => {
             if (!clickedItem.active) {
-                setItems(items.map(item => item.name ==== clickedItem.name ?
+                setItems(items.map(item => item.name === clickedItem.name ?
                     {...item, active: true} : {...item, active: false}));
             }
         }
@@ -20,11 +20,17 @@ const useNavbarItems = () => {
         ];
 
         if (auth.isAuthenticated()) {
-            items.push({name: "Sair", active: false, href: "#", onClick: () => auth.logout()});
+            items.push({name: "Sair", active: false, href: "#", onClick: () => 
+                {auth.logout();
+                setHelloMessage(null)
+            }});
+            setHelloMessage(`Olá, ${auth.credentials.displayName} !`);
         }
 
         setItems(items);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [auth.credentials]);
 
-    return {items};
+    return {items, helloMessage};
 }
