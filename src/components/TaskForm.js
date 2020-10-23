@@ -1,130 +1,98 @@
-import React, { Component } from 'react';
-import TaskService from '../api/TaskService';
+import React, { useContext, useState, useEffect } from 'react';
+import { useTasks } from '../hooks/useTasks';
 import { Redirect } from 'react-router-dom';
-import AuthService from '../api/AuthService';
-import Spinner from './Spinner';
-import Alert from './Alert';
+import Alert from './Alert'
+import { AuthContext } from '../hooks/useAuth';
 
-class TaskForm extends Component {
-    constructor(props) {
-        super(props);
+const TaskForm = (props) => {
+    const auth = useContext(AuthContext);
+    const tasks = useTasks();
+    const [ task, setTask ] = useState({ id: 0, description: "", whenToDo: "" });
+    const [ redirect, setRedirect ] = useState(false);
 
-        this.state = {
-            task: {
-                id: 0,
-                description: "",
-                whenToDo: ""
-            },
-            redirect: false,
-            butttonName: "Cadastrar",
-            alert: null,
-            loading: false,
-            saving: false
+    useEffect(() => {
+        const editId = props.match.params.id;
+
+        if (editId && auth.credentials.username !== null) {
+            tasks.load(~~editId);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ auth.credentials ]);
 
-        this.onSubmitHandler = this.onSubmitHandler.bind(this);
-        this.onInputChangeHandler = this.onInputChangeHandler.bind(this);
-    }
-
-    componentDidMount() {
-        const editId = this.props.match.params.id;
-        if (editId) {
-            this.setState({load: true})
-            TaskService.load(~~editId,
-                task => this.setState({task: task, loading: false, butttonName: "Editar"}),
-                error => {
-                    if (error.response) {
-                        if (error.response.status === 404) {
-                            this.setErrorState("Tarefa não encontrada");
-                        } else {
-                            this.setErrorState(`Erro ao carregar dados: ${error.response}`);
-                        }
-                    } else {
-                        this.setErrorState(`Erro na requisiçãos: ${error.message}`);
-                    }
-                });
+    useEffect(() => {
+        if (tasks.taskLoaded) {
+            setTask(tasks.taskLoaded);
+            tasks.clearTaskLoaded();
         }
-    }
-    
-    setErrorState(error) {
-        this.setState({ alert: error, loading: false })
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ tasks.taskLoaded ]);
 
-    onSubmitHandler(event) {
+    const onSubmitHandler = (event) => {
         event.preventDefault();
-        this.setState({saving: true});
-        TaskService.save(this.state.task,
-            () => this.setState({redirect: true, saving: false}),
-            error => {
-                if (error.response) {
-                    this.setErrorState(`Erro: ${error.response.data.error}` );
-                } else {
-                    this.setErrorState(`Erro  requisiçãos: ${error.message}`);
-                }
-            })
+        tasks.save(task);
     }
 
-    onInputChangeHandler(event) {
+    const onInputChangeHandler = (event) => {
         const field = event.target.name;
         const value = event.target.value;
-        this.setState(prevState => ({ task: {...prevState.task, [field]: value} }));
-        console.log(this.state.task);
+        setTask({ ...task, [field]: value});
     }
 
-    render() {
-        if (!AuthService.isAuthenticated()) {
-            return <Redirect to="/login" />
-        }
-        
-        if (this.state.redirect) {
-            return <Redirect to="/"/>
-        }
-
-        if (this.state.loading) {
-            return <Spinner />
-        }
-
-        return (
-            <div>
-                <h1>Cadastro de Tarefas</h1>
-                {this.state.alert != null ? <Alert message={this.state.alert} /> : ""}
-                <form onSubmit={this.onSubmitHandler}>
-                    <div className="form-group">
-                        <label htmlFor="description">Descrição</label>
-                        <input type="text"
-                            className="form-control"
-                            name="description"
-                            value={this.state.task.description}
-                            placeholder="Descrição da tarefa" 
-                            onChange={this.onInputChangeHandler}/>
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="whenToDo">Data</label>
-                        <input type="date"
-                            className="form-control"
-                            name="whenToDo"
-                            value={this.state.task.whenToDo}
-                            placeholder="Data da tarefa" 
-                            onChange={this.onInputChangeHandler}/>
-                    </div>
-                    <button 
-                        type="submit" 
-                        className="btn btn-primary" 
-                        title="Cadastrar">
-                        {this.state.butttonName}
-                    </button>
-                    &nbsp;&nbsp;
-                    <button 
-                        type="button" 
-                        className="btn btn-secondary" 
-                        onClick={() => this.setState({redirect: true})} 
-                        title="Cancelar">
-                        Cancelar
-                    </button>
-                </form>
-            </div>
-        );
+    if (!auth.isAuthenticated()) {
+        return <Redirect to="/login" />
     }
+
+    if (redirect || tasks.taskUpdated) {
+        return <Redirect to="/" />
+    }
+
+    return (
+        <div>
+            <h1>Cadastro da Tarefa</h1>
+            {tasks.error && <Alert message={tasks.error} />}
+            <form onSubmit={onSubmitHandler}>
+                <div className="form-group">
+                    <label htmlFor="description">Descrição</label>
+                    <input type="text"
+                        className="form-control"
+                        name="description"
+                        value={task.description}
+                        placeholder="Descrição da tarefa"
+                        onChange={onInputChangeHandler} />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="whenToDo">Data</label>
+                    <input type="date"
+                        className="form-control"
+                        name="whenToDo"
+                        value={task.whenToDo}
+                        placeholder="Informe a data da tarefa"
+                        onChange={onInputChangeHandler} />
+                </div>
+                <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    title="Cadastrar"
+                    disabled={tasks.processing}>
+                        {
+                        tasks.processing ?
+                            <span className="spinner-border spinner-border-sm"
+                                role="status" aria-hidden="true">
+                            </span>
+                            : task.id === 0 ? "Salvar" : "Editar"
+                        }
+                </button>
+                &nbsp;&nbsp;
+                <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={tasks.processing}
+                    onClick={() => setRedirect(true)}>
+                    Cancelar
+            </button>
+            </form>
+        </div>
+    );
 }
 
 export default TaskForm;
